@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buzzit</title>
+</head>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .chat-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        width: 400px;
+        position: relative;
+    }
+
+    .chat-title {
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        color: #007bff;
+        margin-bottom: 15px;
+    }
+
+    #message-list {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #fafafa;
+        margin-bottom: 10px;
+    }
+
+    #message-list div {
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+
+    #message-list div:nth-child(odd) {
+        background-color: #e9ecef;
+    }
+
+    #input {
+        width: calc(100% - 85px);
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    #send {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 5px;
+    }
+
+    #send:hover {
+        background-color: #0056b3;
+    }
+
+    .error {
+        color: red;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+    }
+
+</style>
+<body>
+    <div class="chat-container">
+        <div class="chat-title">Buzzit</div>
+        <div class="error"></div>
+        <div id="message-list">
+            <!-- List will contain the messages sent and recieved -->
+
+        </div>
+        <input type="text" id="input"/>
+        <button id="send">Send</button>
+    </div>
+
+
+
+    <script src="http://localhost:3400/socket.io/socket.io.js"></script>
+    <script>
+        // Socket code in client 
+        const socket = io.connect("http://localhost:3400");
+        // get users @
+        const username = prompt("Enter your @:");
+        // emit the username to the server
+        socket.emit('join', username);
+
+        // get the elements
+        const messageInput = document.getElementById('input');
+        const error = document.querySelector('.error');
+        const messageList = document.getElementById('message-list');
+        const sendButton = document.getElementById('send');
+
+        sendButton.addEventListener('click', () => {
+            // Read the message
+            const message = messageInput.value.trim(); // Trim to remove extra spaces
+    
+            // Check if the message is empty
+            if (!message) {
+                error.textContent = "Enter a message";
+                return; // Stop further execution
+            }
+            if(message){
+                error.textContent = '';
+                // emit a custom event if message is present
+                socket.emit('new_message', message);
+                // add message to the list 
+                const messageElement = document.createElement('div');
+                messageElement.innerText = username+": "+message;
+                messageList.appendChild(messageElement);
+
+                messageInput.value = '';
+            }
+        })
+        // now server is emiting an event called broadcast_message
+        // client will listen for that and add that message to the list when 
+        // recieved...
+
+        socket.on('load_messages', (messages)=>{
+            messages.forEach(message => {
+                const messageElement = document.createElement('div');
+                messageElement.innerHTML = new Date(message.timestamp).toDateString()+" - "+message.username+": "+message.chat;
+                messageList.appendChild(messageElement);
+            });
+        })
+
+        socket.on('broadcast_message', (userMessage)=>{
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = userMessage.username+": "+userMessage.message;
+            messageList.appendChild(messageElement);
+        })
+    </script>
+</body>
+</html>
