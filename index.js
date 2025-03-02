@@ -20,6 +20,18 @@ const io = new Server(server, {
     }
 });
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve index.html for the root route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+
 // 3. Use socket Events
 io.on("connection", (socket)=>{
     console.log("Connection is established");
