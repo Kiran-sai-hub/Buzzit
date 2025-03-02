@@ -87,67 +87,60 @@
         <div class="error"></div>
         <div id="message-list">
             <!-- List will contain the messages sent and recieved -->
-
         </div>
-        <input type="text" id="input"/>
+        <input type="text" id="input" placeholder="Type a message..."/>
         <button id="send">Send</button>
     </div>
 
-
-
-    <script src="http://localhost:3400/socket.io/socket.io.js"></script>
+    <!-- Use Render's hosted socket.io -->
+    <script src="https://buzzit-7z5s.onrender.com/socket.io/socket.io.js"></script>
     <script>
-        // Socket code in client 
-        const socket = io("https://buzzit-7z5s.onrender.com");
-        // get users @
+        // Connect to the deployed server on Render
+        const socket = io();
+
+        // Get username for the chat
         const username = prompt("Enter your @:");
-        // emit the username to the server
         socket.emit('join', username);
 
-        // get the elements
+        // Get DOM elements
         const messageInput = document.getElementById('input');
         const error = document.querySelector('.error');
         const messageList = document.getElementById('message-list');
         const sendButton = document.getElementById('send');
 
+        // Send message to server
         sendButton.addEventListener('click', () => {
-            // Read the message
-            const message = messageInput.value.trim(); // Trim to remove extra spaces
-    
-            // Check if the message is empty
+            const message = messageInput.value.trim();
             if (!message) {
                 error.textContent = "Enter a message";
-                return; // Stop further execution
+                return;
             }
-            if(message){
-                error.textContent = '';
-                // emit a custom event if message is present
-                socket.emit('new_message', message);
-                // add message to the list 
-                const messageElement = document.createElement('div');
-                messageElement.innerText = username+": "+message;
-                messageList.appendChild(messageElement);
+            error.textContent = '';
+            socket.emit('new_message', message);
 
-                messageInput.value = '';
-            }
-        })
-        // now server is emiting an event called broadcast_message
-        // client will listen for that and add that message to the list when 
-        // recieved...
+            // Show the sent message instantly
+            const messageElement = document.createElement('div');
+            messageElement.innerText = `${username}: ${message}`;
+            messageList.appendChild(messageElement);
 
-        socket.on('load_messages', (messages)=>{
+            messageInput.value = '';
+        });
+
+        // Load previous messages
+        socket.on('load_messages', (messages) => {
             messages.forEach(message => {
                 const messageElement = document.createElement('div');
-                messageElement.innerHTML = new Date(message.timestamp).toDateString()+" - "+message.username+": "+message.chat;
+                messageElement.innerHTML = `${new Date(message.timestamp).toDateString()} - ${message.username}: ${message.chat}`;
                 messageList.appendChild(messageElement);
             });
-        })
+        });
 
-        socket.on('broadcast_message', (userMessage)=>{
+        // Display new incoming messages
+        socket.on('broadcast_message', (userMessage) => {
             const messageElement = document.createElement('div');
-            messageElement.innerHTML = userMessage.username+": "+userMessage.message;
+            messageElement.innerHTML = `${userMessage.username}: ${userMessage.message}`;
             messageList.appendChild(messageElement);
-        })
+        });
     </script>
 </body>
 </html>

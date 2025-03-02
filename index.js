@@ -23,10 +23,11 @@ const io = new Server(server, {
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve index.html for the root route
+// Route to serve the chat UI
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'client.html'));
 });
